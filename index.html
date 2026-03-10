@@ -37,13 +37,13 @@
             will-change: transform;
         }
         
-        /* 文字區域 */
+        /* 文字區域 - 修正：改為 nowrap */
         #text-box { 
             color: #fff; 
             writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl;
-            display: flex; white-space: pre-wrap; 
+            display: flex; white-space: nowrap; 
             max-width: 90%; max-height: 90%; 
-            line-height: 1.5; /* 核心修正：預設 1.5 行距 */
+            line-height: 1.5;
         }
 
         /* 彈出預覽 */
@@ -161,7 +161,7 @@
                 pageConfigs[i] = {
                     text: txt.trim(),
                     fontSize: prev.fontSize || 60,
-                    lineHeight: prev.lineHeight || 1.5, // 核心修正：初始配置改為 1.5
+                    lineHeight: prev.lineHeight || 1.5,
                     auto: prev.auto !== undefined ? prev.auto : true,
                     alignX: prev.alignX || 'center',
                     alignY: prev.alignY || 'center',
@@ -227,7 +227,7 @@
             s -= 5; el.box.style.fontSize = s + 'px';
         }
         while ((el.box.offsetHeight > limitH || el.box.offsetWidth > limitW) && s > 10) {
-            s -= 1; Registration.box.style.fontSize = s + 'px';
+            s -= 1; el.box.style.fontSize = s + 'px';
         }
         pageConfigs[currentPage].fontSize = s;
         document.getElementById('val-size').innerText = s;
@@ -261,55 +261,42 @@
         updatePageData();
     }
 
-    // --- 核心修正：終極穩定截圖邏輯 ---
     async function downloadImage() {
         console.log("正在生成圖片...");
         
-        // 1. 建立克隆體 (Snapshot) 避免影響當前頁面
         const original = el.container;
         const clone = original.cloneNode(true);
         
-        // 2. 移除數據看板
         const stats = clone.querySelector('#stats-board');
         if(stats) stats.remove();
         
-        // 3. 建立一個穩定容器
         const tempDiv = document.createElement('div');
         tempDiv.style.cssText = "position:fixed; top:-9999px; left:-9999px; width:500px; height:500px; display:flex; align-items:center; justify-content:center; overflow:hidden;";
         
-        // 4. 強制克隆體樣式
         clone.style.width = '500px';
         clone.style.height = '500px';
         clone.style.flexShrink = '0';
         clone.style.position = 'relative';
         clone.style.top = '0'; clone.style.left = '0';
 
-        // ⭐⭐ 核心修正：強制文字方塊不出雙行 ⭐⭐
         const textBox = clone.querySelector('#text-box');
         if(textBox) {
             const conf = pageConfigs[currentPage];
-            // 強制注入樣式
-            textBox.style.whiteSpace = 'nowrap'; // 最高限制：禁止換行
+            textBox.style.whiteSpace = 'nowrap';
             textBox.style.fontSize = (conf.auto ? document.getElementById('val-size').innerText : conf.fontSize) + 'px';
             textBox.style.lineHeight = conf.lineHeight;
             textBox.style.fontFamily = el.font.value;
             textBox.style.transform = `translate(${conf.offX}px, ${conf.offY}px)`;
-            
-            // 重要：修正直排單行模式下的對齊公式
-            // align-self 在 vertical-rl 下控制 X (水平)
             textBox.style.alignSelf = conf.alignX; 
-            // 如果是靠上或靠下，需要補充垂直對齊
-            textBox.style.justifyContent = conf.alignY; // Y
+            textBox.style.justifyContent = conf.alignY;
         }
         
         tempDiv.appendChild(clone);
         document.body.appendChild(tempDiv);
         
-        // 給瀏覽器和 iPad 更多時間應用樣式 (150ms)
         await new Promise(r => setTimeout(r, 150)); 
 
         try {
-            // 5. 對乾淨的克隆體進行高清截圖 (scale: 2 穩定)
             const canvas = await html2canvas(clone, { 
                 scale: 2, 
                 useCORS: true, 
@@ -317,7 +304,6 @@
                 backgroundColor: el.bg.value
             });
             
-            // 6. 顯示彈出層
             const overlay = document.getElementById('image-overlay');
             const finalImg = document.getElementById('final-image');
             finalImg.src = canvas.toDataURL("image/png");
@@ -325,9 +311,8 @@
             console.log("圖片生成完成");
         } catch (e) {
             console.error("生成失敗", e);
-            alert("生成圖片失敗，請再試一次。如果是 iPad，請確保 GitHub 快取已更新 (?v=4)。");
+            alert("生成圖片失敗，請再試一次。");
         } finally {
-            // 7. 移除臨時容器
             document.body.removeChild(tempDiv);
         }
     }
