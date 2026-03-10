@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Poetry Station Pro - Steady Layout</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+Mono:wght@500&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
     <style>
         :root { --sidebar-w: 280px; --accent: #2a5c3a; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -37,13 +36,19 @@
             will-change: transform;
         }
         
-        /* 文字區域 - 修正：改為 nowrap */
+        /* 文字容器 - 使用 flexbox 排列多列 */
         #text-box { 
             color: #fff; 
-            writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl;
-            display: flex; white-space: nowrap; 
+            display: flex; 
+            flex-direction: row-reverse; /* 從右到左排列 */
             max-width: 90%; max-height: 90%; 
-            line-height: 1.5;
+        }
+        
+        /* 每一列 */
+        .text-column {
+            writing-mode: vertical-rl; 
+            -webkit-writing-mode: vertical-rl;
+            white-space: nowrap;
         }
 
         /* 彈出預覽 */
@@ -70,9 +75,9 @@
         <label>外觀樣式</label>
         <input type="color" id="bgColor" value="#545c2a" style="height:35px; width:100%;">
         <select id="fontSelect" style="padding:8px; margin-top:5px;">
-            <option value="'Noto Serif TC', serif">文青宋體 ( TC )</option>
-            <option value="'Noto Sans Mono', monospace">科技黑體 ( Mono )</option>
-            <option value="'ZCOOL KuaiLe', cursive">可愛圓體 ( ZCOOL )</option>
+            <option value="'STSong', 'SimSun', 'Songti SC', serif">文青宋體</option>
+            <option value="'Courier New', 'Consolas', monospace">科技等寬體</option>
+            <option value="'Microsoft YaHei', 'PingFang SC', 'Heiti TC', sans-serif">可愛圓體</option>
         </select>
     </div>
 
@@ -201,16 +206,28 @@
         if (!conf) return;
 
         el.container.style.backgroundColor = el.bg.value;
-        el.box.style.fontFamily = el.font.value;
-        el.box.style.lineHeight = conf.lineHeight;
         el.container.style.alignItems = conf.alignX; 
         el.container.style.justifyContent = conf.alignY; 
         el.box.style.transform = `translate(${conf.offX}px, ${conf.offY}px)`; 
-        el.box.innerText = conf.text;
+        
+        // 將文字拆分成多列（保留空行）
+        const lines = conf.text.split('\n');
+        el.box.innerHTML = '';
+        const marginValue = (conf.lineHeight - 1) * 10; // 將 lineHeight 轉換為列間距
+        lines.forEach(line => {
+            const col = document.createElement('div');
+            col.className = 'text-column';
+            col.style.fontFamily = el.font.value;
+            col.style.margin = `0 ${marginValue}px`;
+            col.textContent = line || '\u00A0'; // 空行用不斷行空格
+            el.box.appendChild(col);
+        });
 
         if (conf.auto) { autoScale(); } 
         else {
-            el.box.style.fontSize = conf.fontSize + 'px';
+            document.querySelectorAll('.text-column').forEach(col => {
+                col.style.fontSize = conf.fontSize + 'px';
+            });
             document.getElementById('val-size').innerText = conf.fontSize;
         }
 
@@ -222,12 +239,16 @@
         const limitW = el.container.clientWidth * 0.88;
         const limitH = el.container.clientHeight * 0.88;
         let s = 250;
-        el.box.style.fontSize = s + 'px';
+        const columns = document.querySelectorAll('.text-column');
+        columns.forEach(col => col.style.fontSize = s + 'px');
+        
         while ((el.box.offsetHeight > limitH || el.box.offsetWidth > limitW) && s > 20) {
-            s -= 5; el.box.style.fontSize = s + 'px';
+            s -= 5; 
+            columns.forEach(col => col.style.fontSize = s + 'px');
         }
         while ((el.box.offsetHeight > limitH || el.box.offsetWidth > limitW) && s > 10) {
-            s -= 1; el.box.style.fontSize = s + 'px';
+            s -= 1; 
+            columns.forEach(col => col.style.fontSize = s + 'px');
         }
         pageConfigs[currentPage].fontSize = s;
         document.getElementById('val-size').innerText = s;
@@ -264,56 +285,31 @@
     async function downloadImage() {
         console.log("正在生成圖片...");
         
-        const original = el.container;
-        const clone = original.cloneNode(true);
+        // 暫時隱藏數據看板
+        const stats = document.getElementById('stats-board');
+        stats.style.display = 'none';
         
-        const stats = clone.querySelector('#stats-board');
-        if(stats) stats.remove();
+        // 稍微等待確保渲染完成
+        await new Promise(r => setTimeout(r, 100));
         
-        const tempDiv = document.createElement('div');
-        tempDiv.style.cssText = "position:fixed; top:-9999px; left:-9999px; width:500px; height:500px; display:flex; align-items:center; justify-content:center; overflow:hidden;";
-        
-        clone.style.width = '500px';
-        clone.style.height = '500px';
-        clone.style.flexShrink = '0';
-        clone.style.position = 'relative';
-        clone.style.top = '0'; clone.style.left = '0';
-
-        const textBox = clone.querySelector('#text-box');
-        if(textBox) {
-            const conf = pageConfigs[currentPage];
-            textBox.style.whiteSpace = 'nowrap';
-            textBox.style.fontSize = (conf.auto ? document.getElementById('val-size').innerText : conf.fontSize) + 'px';
-            textBox.style.lineHeight = conf.lineHeight;
-            textBox.style.fontFamily = el.font.value;
-            textBox.style.transform = `translate(${conf.offX}px, ${conf.offY}px)`;
-            textBox.style.alignSelf = conf.alignX; 
-            textBox.style.justifyContent = conf.alignY;
-        }
-        
-        tempDiv.appendChild(clone);
-        document.body.appendChild(tempDiv);
-        
-        await new Promise(r => setTimeout(r, 150)); 
-
         try {
-            const canvas = await html2canvas(clone, { 
-                scale: 2, 
-                useCORS: true, 
-                logging: false, 
-                backgroundColor: el.bg.value
+            // 使用 dom-to-image 截圖（系統字體不需要特殊處理）
+            const dataUrl = await domtoimage.toPng(el.container, {
+                quality: 1,
+                cacheBust: true
             });
             
             const overlay = document.getElementById('image-overlay');
             const finalImg = document.getElementById('final-image');
-            finalImg.src = canvas.toDataURL("image/png");
+            finalImg.src = dataUrl;
             overlay.style.display = 'flex';
             console.log("圖片生成完成");
         } catch (e) {
             console.error("生成失敗", e);
             alert("生成圖片失敗，請再試一次。");
         } finally {
-            document.body.removeChild(tempDiv);
+            // 恢復數據看板
+            stats.style.display = 'block';
         }
     }
 
