@@ -7,119 +7,35 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+Mono:wght@500&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        :root {
-            --bg-color: #545c2a;
-            --text-color: #ffffff;
-            --font-family: 'Noto Serif TC', serif;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            display: flex;
-            background-color: #f0f0f0;
-            margin: 0;
-            height: 100vh;
-            color: #333;
-        }
-        /* 左側控制面板 */
-        #controls {
-            width: 350px;
-            padding: 20px;
-            background: #fff;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        h2 { margin-top: 0; font-size: 1.2rem; }
-        textarea {
-            width: 100%;
-            height: 150px;
-            padding: 10px;
-            box-sizing: border-box;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
+        :root { --bg-color: #545c2a; --text-color: #ffffff; }
+        body { font-family: -apple-system, sans-serif; display: flex; background: #f0f0f0; margin: 0; height: 100vh; overflow: hidden; }
+        #controls { width: 350px; padding: 20px; background: #fff; box-shadow: 2px 0 10px rgba(0,0,0,0.1); overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        h2 { margin: 0 0 10px 0; font-size: 1.2rem; }
+        textarea { width: 100%; height: 120px; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
         .control-group { display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 13px; font-weight: bold; color: #666; }
-        .btn {
-            padding: 8px 12px;
-            cursor: pointer;
-            border: none;
-            border-radius: 4px;
-            background: #333;
-            color: #fff;
-            font-size: 13px;
-            transition: 0.2s;
-        }
-        .btn:hover { background: #555; }
-        .btn-page { background: #e0e0e0; color: #333; margin-right: 5px; }
-        .btn-download { background: #2a5c3a; margin-top: 10px; }
-
-        /* 右側預覽區 */
-        #preview-area {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            gap: 20px;
-        }
-        #canvas-container {
-            width: 500px;
-            height: 500px;
-            background-color: var(--bg-color);
-            display: flex;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-        #text-box {
-            color: var(--text-color);
-            font-family: var(--font-family);
-            writing-mode: vertical-rl;
-            text-orientation: mixed;
-            display: flex;
-            transition: all 0.1s;
-            white-space: pre-wrap;
-            line-height: 1.5;
-            width: 80%;
-            height: 80%;
-            margin: auto;
-        }
-        /* 數據看板 */
-        #stats-board {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(255,255,255,0.9);
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 11px;
-            border: 1px solid #ddd;
-        }
+        label { font-size: 13px; font-weight: bold; color: #666; display: flex; justify-content: space-between; }
+        .btn { padding: 8px 12px; cursor: pointer; border: none; border-radius: 4px; background: #333; color: #fff; font-size: 13px; }
+        .btn-page { background: #e0e0e0; color: #333; margin: 0 5px 5px 0; }
+        #preview-area { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; background: #e8e8e8; }
+        #canvas-container { width: 500px; height: 500px; background: var(--bg-color); display: flex; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        #text-box { color: var(--text-color); writing-mode: vertical-rl; display: flex; white-space: pre-wrap; width: 85%; height: 85%; margin: auto; transition: transform 0.1s; }
+        #stats-board { position: absolute; bottom: 15px; right: 15px; background: rgba(255,255,255,0.8); padding: 8px; border-radius: 5px; font-size: 10px; line-height: 1.4; pointer-events: none; }
     </style>
 </head>
 <body>
 
 <div id="controls">
-    <h2>Poetry Generator</h2>
+    <h2>Poetry Config</h2>
     
     <div class="control-group">
-        <label>內容輸入 (使用 --- 分頁)</label>
-        <textarea id="textInput" placeholder="輸入詩句...">鏽色&#10;&#10;我終究還是長大了&#10;無視你的意願</textarea>
+        <label>內容輸入 <span>( --- 分頁)</span></label>
+        <textarea id="textInput">鏽色&#10;&#10;我終究還是長大了&#10;無視你的意願</textarea>
         <button class="btn" onclick="insertPageBreak()">插入分頁符號 ---</button>
     </div>
 
     <div class="control-group">
-        <label>底色</label>
+        <label>底色與字體</label>
         <input type="color" id="bgColor" value="#545c2a">
-    </div>
-
-    <div class="control-group">
-        <label>字體風格</label>
         <select id="fontSelect">
             <option value="'Noto Serif TC', serif">文青宋體</option>
             <option value="'Noto Sans Mono', monospace">科技黑體</option>
@@ -128,138 +44,138 @@
     </div>
 
     <div class="control-group">
-        <label>文字對齊 (直排方向)</label>
-        <select id="alignSelect">
-            <option value="center">置中對齊</option>
-            <option value="flex-start">靠上對齊</option>
-            <option value="flex-end">靠下對齊</option>
-        </select>
+        <label>
+            字級縮放 
+            <span><input type="checkbox" id="autoScale" checked> 自動填滿</span>
+        </label>
+        <input type="range" id="fontSizeSlider" min="10" max="250" value="50">
     </div>
 
     <div class="control-group">
-        <label>水平位移 (X)</label>
-        <input type="range" id="offsetX" min="-150" max="150" value="0">
-        <label>垂直位移 (Y)</label>
-        <input type="range" id="offsetY" min="-150" max="150" value="0">
+        <label>行距 (Line Spacing)</label>
+        <input type="range" id="lineHeightSlider" min="1" max="3" step="0.1" value="1.5">
+    </div>
+
+    <div class="control-group">
+        <label>對齊與位移</label>
+        <select id="alignSelect">
+            <option value="center">居中</option>
+            <option value="flex-start">靠上</option>
+            <option value="flex-end">靠下</option>
+        </select>
+        <div style="display:flex; gap:10px;">
+            <div style="flex:1"><small>X 偏移</small><input type="range" id="offsetX" min="-200" max="200" value="0" style="width:100%"></div>
+            <div style="flex:1"><small>Y 偏移</small><input type="range" id="offsetY" min="-200" max="200" value="0" style="width:100%"></div>
+        </div>
     </div>
 
     <hr>
     <div id="pagination-controls"></div>
-    <button class="btn btn-download" onclick="downloadImage()">下載當前頁面 (PNG)</button>
-    
-    <div id="stats-display" style="margin-top:20px; font-size: 12px; color: #666;">
-        </div>
+    <button class="btn" style="background:#2a5c3a" onclick="downloadImage()">下載當前 PNG</button>
 </div>
 
 <div id="preview-area">
     <div id="canvas-container">
         <div id="text-box"></div>
         <div id="stats-board">
-            <b>DATA PANEL</b><br>
-            字級: <span id="stat-fontsize">0</span>px<br>
-            當前字數: <span id="stat-count">0</span><br>
-            總頁數: <span id="stat-pages">0</span>
+            <b>METRICS</b><br>
+            Size: <span id="val-size">0</span>px<br>
+            Lines: <span id="val-lines">0</span><br>
+            Page: <span id="val-page">1/1</span>
         </div>
     </div>
-    <div style="font-size: 14px; color: #888;">模擬 Instagram 1:1 預覽</div>
 </div>
 
 <script>
-    const textInput = document.getElementById('textInput');
-    const textBox = document.getElementById('text-box');
-    const canvasContainer = document.getElementById('canvas-container');
-    const fontSelect = document.getElementById('fontSelect');
-    const bgColor = document.getElementById('bgColor');
-    const alignSelect = document.getElementById('alignSelect');
-    const offsetX = document.getElementById('offsetX');
-    const offsetY = document.getElementById('offsetY');
-    const paginationControls = document.getElementById('pagination-controls');
+    const el = {
+        input: document.getElementById('textInput'),
+        box: document.getElementById('text-box'),
+        canvas: document.getElementById('canvas-container'),
+        font: document.getElementById('fontSelect'),
+        bg: document.getElementById('bgColor'),
+        auto: document.getElementById('autoScale'),
+        size: document.getElementById('fontSizeSlider'),
+        line: document.getElementById('lineHeightSlider'),
+        align: document.getElementById('alignSelect'),
+        offX: document.getElementById('offsetX'),
+        offY: document.getElementById('offsetY'),
+        pages: document.getElementById('pagination-controls')
+    };
 
     let currentPage = 0;
-    let pages = [];
+    let pageData = [];
 
-    function updatePages() {
-        const rawText = textInput.value;
-        pages = rawText.split(/\n---\n|---/);
-        render();
+    function render() {
+        pageData = el.input.value.split(/\n---\n|---/);
+        if (currentPage >= pageData.length) currentPage = pageData.length - 1;
+
+        el.canvas.style.backgroundColor = el.bg.value;
+        el.box.style.fontFamily = el.font.value;
+        el.box.style.justifyContent = el.align.value;
+        el.box.style.lineHeight = el.line.value;
+        el.box.style.transform = `translate(${el.offX.value}px, ${el.offY.value}px)`;
+        
+        const content = (pageData[currentPage] || "").trim();
+        el.box.innerText = content;
+
+        if (el.auto.checked) {
+            el.size.disabled = true;
+            autoScale();
+        } else {
+            el.size.disabled = false;
+            el.box.style.fontSize = el.size.value + 'px';
+            document.getElementById('val-size').innerText = el.size.value;
+        }
+
+        updatePagination();
+        document.getElementById('val-lines').innerText = content.split('\n').length;
+        document.getElementById('val-page').innerText = `${currentPage + 1} / ${pageData.length}`;
+    }
+
+    function autoScale() {
+        let s = 200;
+        const maxW = el.canvas.clientWidth * 0.85;
+        const maxH = el.canvas.clientHeight * 0.85;
+        el.box.style.fontSize = s + 'px';
+        while ((el.box.scrollHeight > maxH || el.box.scrollWidth > maxW) && s > 10) {
+            s -= 1;
+            el.box.style.fontSize = s + 'px';
+        }
+        document.getElementById('val-size').innerText = s;
+        el.size.value = s;
+    }
+
+    function updatePagination() {
+        el.pages.innerHTML = '<label>切換頁面</label>';
+        pageData.forEach((_, i) => {
+            const b = document.createElement('button');
+            b.innerText = i + 1;
+            b.className = 'btn btn-page';
+            if (i === currentPage) b.style.background = '#333', b.style.color = '#fff';
+            b.onclick = () => { currentPage = i; render(); };
+            el.pages.appendChild(b);
+        });
     }
 
     function insertPageBreak() {
-        const start = textInput.selectionStart;
-        const end = textInput.selectionEnd;
-        const text = textInput.value;
-        textInput.value = text.slice(0, start) + "\n---\n" + text.slice(end);
-        updatePages();
-    }
-
-    function render() {
-        if (currentPage >= pages.length) currentPage = pages.length - 1;
-        if (currentPage < 0) currentPage = 0;
-
-        // 更新底色與字體
-        canvasContainer.style.backgroundColor = bgColor.value;
-        textBox.style.fontFamily = fontSelect.value;
-        textBox.style.justifyContent = alignSelect.value;
-        
-        // 更新位移
-        textBox.style.transform = `translate(${offsetX.value}px, ${offsetY.value}px)`;
-
-        // 更新文字
-        const currentText = pages[currentPage] || "";
-        textBox.innerText = currentText.trim();
-
-        // 重新計算字體大小 (每頁獨立)
-        autoScaleFontSize();
-
-        // 更新分頁按鈕
-        paginationControls.innerHTML = '<label>切換頁面</label><br>';
-        pages.forEach((_, i) => {
-            const btn = document.createElement('button');
-            btn.innerText = i + 1;
-            btn.className = 'btn btn-page';
-            if (i === currentPage) btn.style.background = '#333', btn.style.color = '#fff';
-            btn.onclick = () => { currentPage = i; render(); };
-            paginationControls.appendChild(btn);
-        });
-
-        // 更新數據看板
-        document.getElementById('stat-count').innerText = currentText.replace(/\s/g, '').length;
-        document.getElementById('stat-pages').innerText = pages.length;
-    }
-
-    function autoScaleFontSize() {
-        let size = 100; // 從大字體開始縮小
-        textBox.style.fontSize = size + 'px';
-        
-        const maxWidth = canvasContainer.clientWidth * 0.8;
-        const maxHeight = canvasContainer.clientHeight * 0.8;
-
-        while ((textBox.scrollHeight > maxHeight || textBox.scrollWidth > maxWidth) && size > 10) {
-            size -= 1;
-            textBox.style.fontSize = size + 'px';
-        }
-        document.getElementById('stat-fontsize').innerText = size;
+        const cur = el.input.selectionStart;
+        el.input.value = el.input.value.slice(0, cur) + "\n---\n" + el.input.value.slice(cur);
+        render();
     }
 
     async function downloadImage() {
-        const canvas = await html2canvas(canvasContainer);
+        const canvas = await html2canvas(el.canvas, { scale: 2 }); // 2倍清析度
         const link = document.createElement('a');
-        link.download = `poem-page-${currentPage + 1}.png`;
+        link.download = `poem-${Date.now()}.png`;
         link.href = canvas.toDataURL();
         link.click();
     }
 
-    // 監聽事件
-    textInput.addEventListener('input', updatePages);
-    bgColor.addEventListener('input', render);
-    fontSelect.addEventListener('change', render);
-    alignSelect.addEventListener('change', render);
-    offsetX.addEventListener('input', render);
-    offsetY.addEventListener('input', render);
+    [el.input, el.bg, el.font, el.auto, el.size, el.line, el.align, el.offX, el.offY].forEach(item => {
+        item.addEventListener('input', render);
+    });
 
-    // 初始化
-    updatePages();
+    render();
 </script>
-
 </body>
 </html>
