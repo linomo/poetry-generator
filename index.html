@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Poetry Station Pro - Fixed & Steady</title>
+    <title>Poetry Station Pro - Steady Layout</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+Mono:wght@500&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -11,36 +11,39 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, sans-serif; display: flex; background: #f0f0f0; margin: 0; height: 100vh; overflow: hidden; }
 
-        /* 左側控制面板 */
-        #controls { width: var(--sidebar-w); padding: 15px; background: #fff; box-shadow: 2px 0 10px rgba(0,0,0,0.1); overflow-y: auto; display: flex; flex-direction: column; gap: 12px; z-index: 10; }
+        /* 左側工作欄 (保持 280px) */
+        #controls { width: var(--sidebar-w); padding: 15px; background: #fff; box-shadow: 2px 0 10px rgba(0,0,0,0.1); overflow-y: auto; display: flex; flex-direction: column; gap: 15px; z-index: 10; }
         h2 { margin: 0; font-size: 1.1rem; border-left: 4px solid var(--accent); padding-left: 8px; }
         textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; resize: none; background: #fafafa; outline: none; }
         
         .control-group { display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 11px; font-weight: bold; color: #888; display: flex; justify-content: space-between; align-items: center; }
+        label { font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
         
         .size-presets { display: flex; gap: 5px; margin-top: 5px; }
         .btn-size { flex: 1; padding: 6px; font-size: 12px; background: #eee; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; }
 
-        .btn { padding: 10px; cursor: pointer; border: none; border-radius: 6px; background: #333; color: #fff; font-size: 13px; font-weight: bold; }
+        .btn { padding: 10px; cursor: pointer; border: none; border-radius: 6px; background: #333; color: #fff; font-size: 13px; font-weight: bold; transition: background 0.2s; }
+        .btn:hover { background: #444; }
         .btn-page { background: #f0f0f0; color: #333; margin: 0 4px 4px 0; min-width: 35px; border: 1px solid #ddd; font-size: 11px; }
 
-        /* 右側瀏覽介面 */
+        /* 右側瀏覽介面 (保持四周底色緩衝) */
         #preview-area { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #d0d0d0; padding: 40px; }
         
-        /* 截圖目標容器 */
+        /* 卡片容器 (截圖目標) */
         #canvas-container { 
             width: 500px; height: 500px; background: #545c2a; 
             display: flex; position: relative; overflow: hidden; box-shadow: 0 15px 50px rgba(0,0,0,0.3);
             align-items: center; justify-content: center; flex-shrink: 0;
+            will-change: transform;
         }
         
         /* 文字區域 */
         #text-box { 
-            color: #fff; writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl;
+            color: #fff; 
+            writing-mode: vertical-rl; -webkit-writing-mode: vertical-rl;
             display: flex; white-space: pre-wrap; 
             max-width: 90%; max-height: 90%; 
-            line-height: 1.5; /* 預設 1.5 行距 */
+            line-height: 1.5; /* 核心修正：預設 1.5 行距 */
         }
 
         /* 彈出預覽 */
@@ -48,6 +51,7 @@
         #image-overlay img { max-width: 90%; max-height: 80%; border: 1px solid #fff; }
         #image-overlay .hint { color: #fff; margin-top: 20px; font-size: 14px; background: var(--accent); padding: 8px 16px; border-radius: 20px; }
 
+        /* 數據看板 (數據化看板) */
         #stats-board { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.5); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 9px; pointer-events: none; z-index: 5; }
     </style>
 </head>
@@ -57,38 +61,38 @@
     <h2>Poetry Station Pro</h2>
     
     <div class="control-group">
-        <label>內容 <span>(--- 分頁)</span></label>
-        <textarea id="textInput">鏽色&#10;&#10;我終究還是長大了&#10;無視你的意願</textarea>
-        <button class="btn" onclick="insertPageBreak()" style="background:#666; font-size:11px;">插入分頁</button>
+        <label>內容輸入 <span>(--- 分頁)</span></label>
+        <textarea id="textInput" placeholder="在此輸入您的詩作...">鏽色&#10;&#10;我終究還是長大了&#10;無視你的意願</textarea>
+        <button class="btn" onclick="insertPageBreak()" style="background:#666; font-size:11px;">插入分頁符號</button>
     </div>
 
     <div class="control-group">
-        <label>樣式</label>
-        <input type="color" id="bgColor" value="#545c2a" style="height:30px; width:100%;">
-        <select id="fontSelect" style="padding:6px; margin-top:4px;">
-            <option value="'Noto Serif TC', serif">文青宋體</option>
-            <option value="'Noto Sans Mono', monospace">科技黑體</option>
-            <option value="'ZCOOL KuaiLe', cursive">可愛圓體</option>
+        <label>外觀樣式</label>
+        <input type="color" id="bgColor" value="#545c2a" style="height:35px; width:100%;">
+        <select id="fontSelect" style="padding:8px; margin-top:5px;">
+            <option value="'Noto Serif TC', serif">文青宋體 ( TC )</option>
+            <option value="'Noto Sans Mono', monospace">科技黑體 ( Mono )</option>
+            <option value="'ZCOOL KuaiLe', cursive">可愛圓體 ( ZCOOL )</option>
         </select>
     </div>
 
     <div class="control-group">
-        <label>字體大小 <span><input type="checkbox" id="autoScale" checked> 自動</span></label>
+        <label>字體大小 <span><input type="checkbox" id="autoScale" checked> 自動填滿</span></label>
         <div class="size-presets">
             <button class="btn-size" onclick="setFixedSize(30)">30px</button>
             <button class="btn-size" onclick="setFixedSize(33)">33px</button>
             <button class="btn-size" onclick="setFixedSize(50)">50px</button>
         </div>
-        <input type="range" id="fontSizeSlider" min="10" max="250" value="60" style="margin-top:8px;">
+        <input type="range" id="fontSizeSlider" min="10" max="250" value="60" style="margin-top:10px;">
     </div>
 
     <div class="control-group">
-        <label>行距 (當前頁) <span id="val-lh">1.5</span></label>
+        <label>行距調整 (獨立) <span id="val-lh">1.5</span></label>
         <input type="range" id="lineHeightSlider" min="0.8" max="2.5" step="0.1" value="1.5">
     </div>
 
     <div class="control-group">
-        <label>對齊</label>
+        <label>對齊設定 (獨立)</label>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
             <select id="alignX"><option value="center">X 居中</option><option value="flex-start">X 置右</option><option value="flex-end">X 置左</option></select>
             <select id="alignY"><option value="center">Y 居中</option><option value="flex-start">Y 靠上</option><option value="flex-end">Y 靠下</option></select>
@@ -96,7 +100,7 @@
     </div>
 
     <div class="control-group">
-        <label>位移 (X / Y)</label>
+        <label>細部座標位移 (X / Y)</label>
         <div style="display:flex; gap:10px;">
             <input type="range" id="offsetX" min="-250" max="250" value="0">
             <input type="range" id="offsetY" min="-250" max="250" value="0">
@@ -105,7 +109,7 @@
 
     <hr style="border:0; border-top:1px solid #eee; margin:5px 0;">
     <div id="pagination-controls"></div>
-    <button class="btn" style="background:var(--accent); margin-top:10px;" onclick="downloadImage()">生成圖片 (長按存檔)</button>
+    <button class="btn" style="background:var(--accent); margin-top:10px;" onclick="downloadImage()">生成圖片 (長按/右鍵存檔)</button>
 </aside>
 
 <main id="preview-area">
@@ -119,7 +123,7 @@
 
 <div id="image-overlay" onclick="this.style.display='none'">
     <div class="hint">💡 圖片已生成！請「長按」圖片選擇儲存至相簿</div>
-    <img id="final-image" src="" alt="生成的卡片">
+    <img id="final-image" src="" alt="生成的詩歌卡片">
     <div style="color:#aaa; font-size:12px; margin-top:15px;">點擊空白處返回</div>
 </div>
 
@@ -157,7 +161,7 @@
                 pageConfigs[i] = {
                     text: txt.trim(),
                     fontSize: prev.fontSize || 60,
-                    lineHeight: prev.lineHeight || 1.5, // 預設 1.5
+                    lineHeight: prev.lineHeight || 1.5, // 核心修正：初始配置改為 1.5
                     auto: prev.auto !== undefined ? prev.auto : true,
                     alignX: prev.alignX || 'center',
                     alignY: prev.alignY || 'center',
@@ -199,9 +203,9 @@
         el.container.style.backgroundColor = el.bg.value;
         el.box.style.fontFamily = el.font.value;
         el.box.style.lineHeight = conf.lineHeight;
-        el.container.style.alignItems = conf.alignX;
-        el.container.style.justifyContent = conf.alignY;
-        el.box.style.transform = `translate(${conf.offX}px, ${conf.offY}px)`;
+        el.container.style.alignItems = conf.alignX; 
+        el.container.style.justifyContent = conf.alignY; 
+        el.box.style.transform = `translate(${conf.offX}px, ${conf.offY}px)`; 
         el.box.innerText = conf.text;
 
         if (conf.auto) { autoScale(); } 
@@ -223,7 +227,7 @@
             s -= 5; el.box.style.fontSize = s + 'px';
         }
         while ((el.box.offsetHeight > limitH || el.box.offsetWidth > limitW) && s > 10) {
-            s -= 1; el.box.style.fontSize = s + 'px';
+            s -= 1; Registration.box.style.fontSize = s + 'px';
         }
         pageConfigs[currentPage].fontSize = s;
         document.getElementById('val-size').innerText = s;
@@ -252,61 +256,78 @@
 
     function insertPageBreak() {
         const pos = el.input.selectionStart;
-        el.input.value = el.input.value.slice(0, pos) + "\n---\n" + el.input.value.slice(pos);
+        const val = el.input.value;
+        el.input.value = val.slice(0, pos) + "\n---\n" + val.slice(pos);
         updatePageData();
     }
 
-    // --- 終極修正：穩定截圖邏輯 ---
+    // --- 核心修正：終極穩定截圖邏輯 ---
     async function downloadImage() {
-        const overlay = document.getElementById('image-overlay');
-        const finalImg = document.getElementById('final-image');
+        console.log("正在生成圖片...");
         
-        // 1. 克隆並清理
+        // 1. 建立克隆體 (Snapshot) 避免影響當前頁面
         const original = el.container;
         const clone = original.cloneNode(true);
+        
+        // 2. 移除數據看板
         const stats = clone.querySelector('#stats-board');
         if(stats) stats.remove();
         
-        // 2. 建立穩定容器
+        // 3. 建立一個穩定容器
         const tempDiv = document.createElement('div');
-        tempDiv.style.cssText = "position:fixed; top:-9999px; left:-9999px; width:500px; height:500px; display:flex; align-items:center; justify-content:center;";
+        tempDiv.style.cssText = "position:fixed; top:-9999px; left:-9999px; width:500px; height:500px; display:flex; align-items:center; justify-content:center; overflow:hidden;";
         
-        // 3. 強制注入樣式
-        clone.style.width = "500px";
-        clone.style.height = "500px";
-        clone.style.flexShrink = "0";
-        clone.style.transform = "none"; // 清除容器位移
-        
+        // 4. 強制克隆體樣式
+        clone.style.width = '500px';
+        clone.style.height = '500px';
+        clone.style.flexShrink = '0';
+        clone.style.position = 'relative';
+        clone.style.top = '0'; clone.style.left = '0';
+
+        // ⭐⭐ 核心修正：強制文字方塊不出雙行 ⭐⭐
         const textBox = clone.querySelector('#text-box');
         if(textBox) {
-            // 將原本透過 JS 套用的樣式強制寫入克隆體的 Style 屬性
             const conf = pageConfigs[currentPage];
+            // 強制注入樣式
+            textBox.style.whiteSpace = 'nowrap'; // 最高限制：禁止換行
             textBox.style.fontSize = (conf.auto ? document.getElementById('val-size').innerText : conf.fontSize) + 'px';
             textBox.style.lineHeight = conf.lineHeight;
             textBox.style.fontFamily = el.font.value;
             textBox.style.transform = `translate(${conf.offX}px, ${conf.offY}px)`;
+            
+            // 重要：修正直排單行模式下的對齊公式
+            // align-self 在 vertical-rl 下控制 X (水平)
+            textBox.style.alignSelf = conf.alignX; 
+            // 如果是靠上或靠下，需要補充垂直對齊
+            textBox.style.justifyContent = conf.alignY; // Y
         }
-
+        
         tempDiv.appendChild(clone);
         document.body.appendChild(tempDiv);
         
-        // 4. 等待渲染完成
+        // 給瀏覽器和 iPad 更多時間應用樣式 (150ms)
         await new Promise(r => setTimeout(r, 150)); 
 
         try {
+            // 5. 對乾淨的克隆體進行高清截圖 (scale: 2 穩定)
             const canvas = await html2canvas(clone, { 
                 scale: 2, 
                 useCORS: true, 
-                backgroundColor: el.bg.value,
-                logging: false,
-                width: 500,
-                height: 500
+                logging: false, 
+                backgroundColor: el.bg.value
             });
+            
+            // 6. 顯示彈出層
+            const overlay = document.getElementById('image-overlay');
+            const finalImg = document.getElementById('final-image');
             finalImg.src = canvas.toDataURL("image/png");
             overlay.style.display = 'flex';
+            console.log("圖片生成完成");
         } catch (e) {
-            alert("生成失敗，請再試一次。");
+            console.error("生成失敗", e);
+            alert("生成圖片失敗，請再試一次。如果是 iPad，請確保 GitHub 快取已更新 (?v=4)。");
         } finally {
+            // 7. 移除臨時容器
             document.body.removeChild(tempDiv);
         }
     }
