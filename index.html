@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Poetry Station Pro - Optimized</title>
+    <title>Poetry Station Pro - Line Spacing Fix</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+Mono:wght@500&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -13,34 +13,31 @@
 
         #controls { width: var(--sidebar-w); padding: 15px; background: #fff; box-shadow: 2px 0 10px rgba(0,0,0,0.1); overflow-y: auto; display: flex; flex-direction: column; gap: 15px; z-index: 10; }
         h2 { margin: 0; font-size: 1.1rem; border-left: 4px solid var(--accent); padding-left: 8px; }
-        textarea { width: 100%; height: 120px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; resize: none; background: #fafafa; outline: none; transition: border 0.2s; }
-        textarea:focus { border-color: var(--accent); }
+        textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; resize: none; background: #fafafa; outline: none; }
         
         .control-group { display: flex; flex-direction: column; gap: 5px; }
         label { font-size: 11px; font-weight: bold; color: #888; display: flex; justify-content: space-between; align-items: center; }
         
         .size-presets { display: flex; gap: 5px; margin-top: 5px; }
         .btn-size { flex: 1; padding: 6px; font-size: 12px; background: #eee; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; }
-        .btn-size:hover { background: #e5e5e5; }
 
-        .btn { padding: 10px; cursor: pointer; border: none; border-radius: 6px; background: #333; color: #fff; font-size: 13px; font-weight: bold; transition: background 0.2s; }
-        .btn:hover { background: #444; }
+        .btn { padding: 10px; cursor: pointer; border: none; border-radius: 6px; background: #333; color: #fff; font-size: 13px; font-weight: bold; }
         .btn-page { background: #f0f0f0; color: #333; margin: 0 4px 4px 0; min-width: 35px; border: 1px solid #ddd; font-size: 11px; }
 
-        #preview-area { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #d0d0d0; padding: 40px; overflow: auto; }
+        #preview-area { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #d0d0d0; padding: 40px; }
         #canvas-container { 
             width: 500px; height: 500px; background: #545c2a; 
             display: flex; position: relative; overflow: hidden; box-shadow: 0 15px 50px rgba(0,0,0,0.3);
             align-items: center; justify-content: center; flex-shrink: 0;
-            will-change: transform; /* 硬體加速 */
         }
         #text-box { 
             color: #fff; writing-mode: vertical-rl; display: flex; white-space: pre-wrap; 
-            max-width: 90%; max-height: 90%; line-height: 1.5; 
+            max-width: 90%; max-height: 90%; 
+            /* 核心行距設定將由 JS 動態控制 */
         }
 
         #image-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
-        #image-overlay img { max-width: 90%; max-height: 80%; border: 1px solid #fff; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        #image-overlay img { max-width: 90%; max-height: 80%; border: 1px solid #fff; }
         #image-overlay .hint { color: #fff; margin-top: 20px; font-size: 14px; background: var(--accent); padding: 8px 16px; border-radius: 20px; }
 
         #stats-board { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.5); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 9px; pointer-events: none; }
@@ -53,14 +50,14 @@
     
     <div class="control-group">
         <label>內容輸入 <span>(--- 分頁)</span></label>
-        <textarea id="textInput" placeholder="在此輸入您的詩作...">鏽色&#10;&#10;我終究還是長大了&#10;無視你的意願</textarea>
+        <textarea id="textInput">鏽色&#10;&#10;我終究還是長大了&#10;無視你的意願</textarea>
         <button class="btn" onclick="insertPageBreak()" style="background:#666; font-size:11px;">插入分頁符號</button>
     </div>
 
     <div class="control-group">
-        <label>底色與字體風格</label>
-        <input type="color" id="bgColor" value="#545c2a" style="height:35px; border-radius:4px; border:1px solid #ddd; padding:2px;">
-        <select id="fontSelect" style="padding:8px; border-radius:4px;">
+        <label>底色與風格</label>
+        <input type="color" id="bgColor" value="#545c2a" style="height:35px; width:100%;">
+        <select id="fontSelect" style="padding:8px; margin-top:5px;">
             <option value="'Noto Serif TC', serif">文青宋體</option>
             <option value="'Noto Sans Mono', monospace">科技黑體</option>
             <option value="'ZCOOL KuaiLe', cursive">可愛圓體</option>
@@ -68,7 +65,7 @@
     </div>
 
     <div class="control-group">
-        <label>字體大小控制 <span><input type="checkbox" id="autoScale" checked> 自動填滿</span></label>
+        <label>字體大小 <span><input type="checkbox" id="autoScale" checked> 自動</span></label>
         <div class="size-presets">
             <button class="btn-size" onclick="setFixedSize(30)">30px</button>
             <button class="btn-size" onclick="setFixedSize(33)">33px</button>
@@ -78,7 +75,12 @@
     </div>
 
     <div class="control-group">
-        <label>對齊設定 (獨立分頁)</label>
+        <label>行距調整 (獨立) <span id="val-lh">1.2</span></label>
+        <input type="range" id="lineHeightSlider" min="0.8" max="2.0" step="0.05" value="1.2">
+    </div>
+
+    <div class="control-group">
+        <label>對齊設定</label>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
             <select id="alignX"><option value="center">X 居中</option><option value="flex-start">X 置右</option><option value="flex-end">X 置左</option></select>
             <select id="alignY"><option value="center">Y 居中</option><option value="flex-start">Y 靠上</option><option value="flex-end">Y 靠下</option></select>
@@ -86,7 +88,7 @@
     </div>
 
     <div class="control-group">
-        <label>細部座標位移 (X / Y)</label>
+        <label>位移 (X / Y)</label>
         <div style="display:flex; gap:10px;">
             <input type="range" id="offsetX" min="-250" max="250" value="0">
             <input type="range" id="offsetY" min="-250" max="250" value="0">
@@ -95,20 +97,20 @@
 
     <hr style="border:0; border-top:1px solid #eee; margin:5px 0;">
     <div id="pagination-controls"></div>
-    <button class="btn" style="background:var(--accent); margin-top:10px;" onclick="downloadImage()">生成圖片 (長按/右鍵存檔)</button>
+    <button class="btn" style="background:var(--accent); margin-top:10px;" onclick="downloadImage()">生成圖片</button>
 </aside>
 
 <main id="preview-area">
     <div id="canvas-container">
         <div id="text-box"></div>
         <div id="stats-board">
-            SIZE: <span id="val-size">0</span>px | PAGE: <span id="val-page">1/1</span>
+            SIZE: <span id="val-size">0</span>px | LH: <span id="val-lh-display">1.2</span>
         </div>
     </div>
 </main>
 
 <div id="image-overlay" onclick="this.style.display='none'">
-    <div class="hint">💡 圖片已生成！請「長按」或「右鍵」儲存至相簿</div>
+    <div class="hint">💡 圖片已生成！請「長按」或「右鍵」儲存影像</div>
     <img id="final-image" src="" alt="長按儲存">
     <div style="color:#aaa; font-size:12px; margin-top:15px;">點擊空白處返回</div>
 </div>
@@ -122,6 +124,7 @@
         font: document.getElementById('fontSelect'),
         auto: document.getElementById('autoScale'),
         size: document.getElementById('fontSizeSlider'),
+        lineH: document.getElementById('lineHeightSlider'),
         alignX: document.getElementById('alignX'),
         alignY: document.getElementById('alignY'),
         offX: document.getElementById('offsetX'),
@@ -133,12 +136,9 @@
     let pageConfigs = [];
     let debounceTimer;
 
-    // 防抖函數：避免輸入太快導致瀏覽器崩潰
     function debounceRender() {
         clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            updatePageData();
-        }, 100); 
+        debounceTimer = setTimeout(() => updatePageData(), 100);
     }
 
     function updatePageData() {
@@ -149,15 +149,14 @@
                 pageConfigs[i] = {
                     text: txt.trim(),
                     fontSize: prev.fontSize || 60,
+                    lineHeight: prev.lineHeight || 1.2, // 預設改為 1.2
                     auto: prev.auto !== undefined ? prev.auto : true,
                     alignX: prev.alignX || 'center',
                     alignY: prev.alignY || 'center',
                     offX: prev.offX || 0,
                     offY: prev.offY || 0
                 };
-            } else {
-                pageConfigs[i].text = txt.trim();
-            }
+            } else { pageConfigs[i].text = txt.trim(); }
         });
         if (pageConfigs.length > texts.length) pageConfigs = pageConfigs.slice(0, texts.length);
         syncUI();
@@ -168,11 +167,13 @@
         if (!conf) return;
         el.auto.checked = conf.auto;
         el.size.value = conf.fontSize;
+        el.lineH.value = conf.lineHeight;
         el.size.disabled = conf.auto;
         el.alignX.value = conf.alignX;
         el.alignY.value = conf.alignY;
         el.offX.value = conf.offX;
         el.offY.value = conf.offY;
+        document.getElementById('val-lh').innerText = conf.lineHeight;
         render();
     }
 
@@ -189,41 +190,33 @@
 
         el.container.style.backgroundColor = el.bg.value;
         el.box.style.fontFamily = el.font.value;
+        el.box.style.lineHeight = conf.lineHeight;
         el.container.style.alignItems = conf.alignX;
         el.container.style.justifyContent = conf.alignY;
         el.box.style.transform = `translate(${conf.offX}px, ${conf.offY}px)`;
         el.box.innerText = conf.text;
 
-        if (conf.auto) {
-            autoScale();
-        } else {
+        if (conf.auto) { autoScale(); } 
+        else {
             el.box.style.fontSize = conf.fontSize + 'px';
             document.getElementById('val-size').innerText = conf.fontSize;
         }
 
         updatePagination();
-        document.getElementById('val-page').innerText = `${currentPage + 1}/${pageConfigs.length}`;
+        document.getElementById('val-lh-display').innerText = conf.lineHeight;
     }
 
-    // 優化後的縮放邏輯
     function autoScale() {
         const limitW = el.container.clientWidth * 0.88;
         const limitH = el.container.clientHeight * 0.88;
-        let s = 250; 
-        
+        let s = 250;
         el.box.style.fontSize = s + 'px';
-        
-        // 快速粗略調整 (每次減 5px)
         while ((el.box.offsetHeight > limitH || el.box.offsetWidth > limitW) && s > 20) {
-            s -= 5;
-            el.box.style.fontSize = s + 'px';
+            s -= 5; el.box.style.fontSize = s + 'px';
         }
-        // 精確微調 (每次減 1px)
         while ((el.box.offsetHeight > limitH || el.box.offsetWidth > limitW) && s > 10) {
-            s -= 1;
-            el.box.style.fontSize = s + 'px';
+            s -= 1; el.box.style.fontSize = s + 'px';
         }
-
         pageConfigs[currentPage].fontSize = s;
         document.getElementById('val-size').innerText = s;
         el.size.value = s;
@@ -232,6 +225,7 @@
     function handleControlInput(key, value) {
         if (pageConfigs[currentPage]) {
             pageConfigs[currentPage][key] = value;
+            if(key === 'lineHeight') document.getElementById('val-lh').innerText = value;
             render();
         }
     }
@@ -250,32 +244,26 @@
 
     function insertPageBreak() {
         const pos = el.input.selectionStart;
-        const val = el.input.value;
-        el.input.value = val.slice(0, pos) + "\n---\n" + val.slice(pos);
+        el.input.value = el.input.value.slice(0, pos) + "\n---\n" + el.input.value.slice(pos);
         updatePageData();
     }
 
     async function downloadImage() {
         document.getElementById('stats-board').style.opacity = '0';
-        const canvas = await html2canvas(el.container, { 
-            scale: 2, /* 電腦版改為 2 倍即可，避免生成超大檔案造成卡頓 */
-            useCORS: true,
-            logging: false 
-        });
+        const canvas = await html2canvas(el.container, { scale: 3, useCORS: true });
         document.getElementById('stats-board').style.opacity = '1';
-        
         const overlay = document.getElementById('image-overlay');
         const finalImg = document.getElementById('final-image');
         finalImg.src = canvas.toDataURL("image/png");
         overlay.style.display = 'flex';
     }
 
-    // 事件綁定
     el.input.addEventListener('input', debounceRender);
     el.bg.addEventListener('input', render);
     el.font.addEventListener('change', render);
     el.auto.addEventListener('change', (e) => handleControlInput('auto', e.target.checked));
     el.size.addEventListener('input', (e) => handleControlInput('fontSize', parseInt(e.target.value)));
+    el.lineH.addEventListener('input', (e) => handleControlInput('lineHeight', parseFloat(e.target.value)));
     el.alignX.addEventListener('change', (e) => handleControlInput('alignX', e.target.value));
     el.alignY.addEventListener('change', (e) => handleControlInput('alignY', e.target.value));
     el.offX.addEventListener('input', (e) => handleControlInput('offX', parseInt(e.target.value)));
