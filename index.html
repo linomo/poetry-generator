@@ -293,10 +293,18 @@
         await new Promise(r => setTimeout(r, 100));
         
         try {
-            // 使用 dom-to-image 截圖（系統字體不需要特殊處理）
+            // 使用 dom-to-image 截圖，2倍解析度
             const dataUrl = await domtoimage.toPng(el.container, {
                 quality: 1,
-                cacheBust: true
+                cacheBust: true,
+                width: 1000,  // 2x 解析度
+                height: 1000,
+                style: {
+                    transform: 'scale(2)',
+                    transformOrigin: 'top left',
+                    width: '500px',
+                    height: '500px'
+                }
             });
             
             const overlay = document.getElementById('image-overlay');
