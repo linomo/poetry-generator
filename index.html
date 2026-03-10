@@ -3,23 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Poetry Card Generator - IG Edition</title>
+    <title>Poetry Card Generator - Pro Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+Mono:wght@500&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root { --bg-color: #545c2a; --text-color: #ffffff; }
         body { font-family: -apple-system, sans-serif; display: flex; background: #f0f0f0; margin: 0; height: 100vh; overflow: hidden; }
-        #controls { width: 350px; padding: 20px; background: #fff; box-shadow: 2px 0 10px rgba(0,0,0,0.1); overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
-        h2 { margin: 0 0 10px 0; font-size: 1.2rem; }
-        textarea { width: 100%; height: 120px; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        
+        /* 控制面板 */
+        #controls { width: 350px; padding: 20px; background: #fff; box-shadow: 2px 0 10px rgba(0,0,0,0.1); overflow-y: auto; display: flex; flex-direction: column; gap: 15px; z-index: 10; }
+        h2 { margin: 0 0 10px 0; font-size: 1.2rem; border-bottom: 2px solid #333; padding-bottom: 5px; }
+        textarea { width: 100%; height: 100px; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; resize: none; }
         .control-group { display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 13px; font-weight: bold; color: #666; display: flex; justify-content: space-between; }
-        .btn { padding: 8px 12px; cursor: pointer; border: none; border-radius: 4px; background: #333; color: #fff; font-size: 13px; }
-        .btn-page { background: #e0e0e0; color: #333; margin: 0 5px 5px 0; }
-        #preview-area { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; background: #e8e8e8; }
-        #canvas-container { width: 500px; height: 500px; background: var(--bg-color); display: flex; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        #text-box { color: var(--text-color); writing-mode: vertical-rl; display: flex; white-space: pre-wrap; width: 85%; height: 85%; margin: auto; transition: transform 0.1s; }
-        #stats-board { position: absolute; bottom: 15px; right: 15px; background: rgba(255,255,255,0.8); padding: 8px; border-radius: 5px; font-size: 10px; line-height: 1.4; pointer-events: none; }
+        label { font-size: 12px; font-weight: bold; color: #666; display: flex; justify-content: space-between; align-items: center; }
+        select, input[type="range"] { width: 100%; }
+        .btn { padding: 10px; cursor: pointer; border: none; border-radius: 4px; background: #333; color: #fff; font-size: 13px; font-weight: bold; }
+        .btn-page { background: #eee; color: #333; margin: 0 4px 4px 0; font-weight: normal; min-width: 35px; }
+        
+        /* 預覽區域 */
+        #preview-area { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #e8e8e8; position: relative; }
+        #canvas-container { 
+            width: 500px; height: 500px; 
+            background: var(--bg-color); 
+            display: flex; 
+            position: relative; 
+            overflow: hidden; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            /* 核心對齊邏輯 */
+            align-items: center;    /* 預設 X 軸置中 */
+            justify-content: center; /* 預設 Y 軸置中 */
+        }
+        #text-box { 
+            color: var(--text-color); 
+            writing-mode: vertical-rl; 
+            display: flex; 
+            white-space: pre-wrap; 
+            width: auto; height: auto; 
+            max-width: 90%; max-height: 90%;
+            transition: transform 0.1s;
+            line-height: 1.5;
+        }
+
+        /* 數據看板 */
+        #stats-board { position: absolute; bottom: 15px; right: 15px; background: rgba(0,0,0,0.7); color: #fff; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 10px; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -28,60 +54,67 @@
     <h2>Poetry Config</h2>
     
     <div class="control-group">
-        <label>內容輸入 <span>( --- 分頁)</span></label>
+        <label>內文 <span>(--- 分頁)</span></label>
         <textarea id="textInput">鏽色&#10;&#10;我終究還是長大了&#10;無視你的意願</textarea>
-        <button class="btn" onclick="insertPageBreak()">插入分頁符號 ---</button>
+        <button class="btn" onclick="insertPageBreak()" style="background:#666">插入分頁符號</button>
     </div>
 
     <div class="control-group">
-        <label>底色與字體</label>
+        <label>外觀設定</label>
         <input type="color" id="bgColor" value="#545c2a">
         <select id="fontSelect">
-            <option value="'Noto Serif TC', serif">文青宋體</option>
-            <option value="'Noto Sans Mono', monospace">科技黑體</option>
-            <option value="'ZCOOL KuaiLe', cursive">可愛圓潤</option>
+            <option value="'Noto Serif TC', serif">文青宋體 (Serif)</option>
+            <option value="'Noto Sans Mono', monospace">科技黑體 (Mono)</option>
+            <option value="'ZCOOL KuaiLe', cursive">可愛圓體 (Happy)</option>
         </select>
     </div>
 
     <div class="control-group">
         <label>
-            字級縮放 
-            <span><input type="checkbox" id="autoScale" checked> 自動填滿</span>
+            字體大小 
+            <span><input type="checkbox" id="autoScale" checked> 自動縮放</span>
         </label>
-        <input type="range" id="fontSizeSlider" min="10" max="250" value="50">
+        <input type="range" id="fontSizeSlider" min="12" max="200" value="60">
     </div>
 
     <div class="control-group">
-        <label>行距 (Line Spacing)</label>
-        <input type="range" id="lineHeightSlider" min="1" max="3" step="0.1" value="1.5">
-    </div>
-
-    <div class="control-group">
-        <label>對齊與位移</label>
-        <select id="alignSelect">
-            <option value="center">居中</option>
-            <option value="flex-start">靠上</option>
-            <option value="flex-end">靠下</option>
+        <label>X 軸對齊 (水平方向)</label>
+        <select id="alignX">
+            <option value="center">置中 (Center)</option>
+            <option value="flex-start">置右 (Right / Start)</option>
+            <option value="flex-end">置左 (Left / End)</option>
         </select>
+    </div>
+
+    <div class="control-group">
+        <label>Y 軸對齊 (垂直方向)</label>
+        <select id="alignY">
+            <option value="center">置中 (Middle)</option>
+            <option value="flex-start">靠上 (Top)</option>
+            <option value="flex-end">靠下 (Bottom)</option>
+        </select>
+    </div>
+
+    <div class="control-group">
+        <label>細部座標微調 (X / Y)</label>
         <div style="display:flex; gap:10px;">
-            <div style="flex:1"><small>X 偏移</small><input type="range" id="offsetX" min="-200" max="200" value="0" style="width:100%"></div>
-            <div style="flex:1"><small>Y 偏移</small><input type="range" id="offsetY" min="-200" max="200" value="0" style="width:100%"></div>
+            <input type="range" id="offsetX" min="-200" max="200" value="0">
+            <input type="range" id="offsetY" min="-200" max="200" value="0">
         </div>
     </div>
 
     <hr>
     <div id="pagination-controls"></div>
-    <button class="btn" style="background:#2a5c3a" onclick="downloadImage()">下載當前 PNG</button>
+    <button class="btn" style="background:#2a5c3a; margin-top:10px;" onclick="downloadImage()">下載當前頁面 (PNG)</button>
 </div>
 
 <div id="preview-area">
-    <div id="canvas-container">
+    <div id="canvas-container" id="capture">
         <div id="text-box"></div>
         <div id="stats-board">
-            <b>METRICS</b><br>
-            Size: <span id="val-size">0</span>px<br>
-            Lines: <span id="val-lines">0</span><br>
-            Page: <span id="val-page">1/1</span>
+            SIZE: <span id="val-size">0</span>px | 
+            POS: <span id="val-pos">0,0</span><br>
+            PAGE: <span id="val-page">1/1</span>
         </div>
     </div>
 </div>
@@ -90,13 +123,13 @@
     const el = {
         input: document.getElementById('textInput'),
         box: document.getElementById('text-box'),
-        canvas: document.getElementById('canvas-container'),
+        container: document.getElementById('canvas-container'),
         font: document.getElementById('fontSelect'),
         bg: document.getElementById('bgColor'),
         auto: document.getElementById('autoScale'),
         size: document.getElementById('fontSizeSlider'),
-        line: document.getElementById('lineHeightSlider'),
-        align: document.getElementById('alignSelect'),
+        alignX: document.getElementById('alignX'),
+        alignY: document.getElementById('alignY'),
         offX: document.getElementById('offsetX'),
         offY: document.getElementById('offsetY'),
         pages: document.getElementById('pagination-controls')
@@ -106,18 +139,28 @@
     let pageData = [];
 
     function render() {
+        // 分頁處理
         pageData = el.input.value.split(/\n---\n|---/);
         if (currentPage >= pageData.length) currentPage = pageData.length - 1;
 
-        el.canvas.style.backgroundColor = el.bg.value;
+        // 樣式套用
+        el.container.style.backgroundColor = el.bg.value;
         el.box.style.fontFamily = el.font.value;
-        el.box.style.justifyContent = el.align.value;
-        el.box.style.lineHeight = el.line.value;
+        
+        // 直排模式下的對齊邏輯修正
+        // align-items 在 vertical-rl 模式下控制水平 (X)
+        el.container.style.alignItems = el.alignX.value; 
+        // justify-content 在 vertical-rl 模式下控制垂直 (Y)
+        el.container.style.justifyContent = el.alignY.value; 
+        
+        // 位移
         el.box.style.transform = `translate(${el.offX.value}px, ${el.offY.value}px)`;
         
+        // 內容
         const content = (pageData[currentPage] || "").trim();
         el.box.innerText = content;
 
+        // 字體縮放
         if (el.auto.checked) {
             el.size.disabled = true;
             autoScale();
@@ -127,17 +170,20 @@
             document.getElementById('val-size').innerText = el.size.value;
         }
 
+        // 介面更新
         updatePagination();
-        document.getElementById('val-lines').innerText = content.split('\n').length;
+        document.getElementById('val-pos').innerText = `${el.offX.value},${el.offY.value}`;
         document.getElementById('val-page').innerText = `${currentPage + 1} / ${pageData.length}`;
     }
 
     function autoScale() {
         let s = 200;
-        const maxW = el.canvas.clientWidth * 0.85;
-        const maxH = el.canvas.clientHeight * 0.85;
+        const limitW = el.container.clientWidth * 0.85;
+        const limitH = el.container.clientHeight * 0.85;
         el.box.style.fontSize = s + 'px';
-        while ((el.box.scrollHeight > maxH || el.box.scrollWidth > maxW) && s > 10) {
+        
+        // 循環縮小直到符合範圍
+        while ((el.box.offsetHeight > limitH || el.box.offsetWidth > limitW) && s > 12) {
             s -= 1;
             el.box.style.fontSize = s + 'px';
         }
@@ -151,30 +197,37 @@
             const b = document.createElement('button');
             b.innerText = i + 1;
             b.className = 'btn btn-page';
-            if (i === currentPage) b.style.background = '#333', b.style.color = '#fff';
+            if (i === currentPage) { b.style.background = '#333'; b.style.color = '#fff'; }
             b.onclick = () => { currentPage = i; render(); };
             el.pages.appendChild(b);
         });
     }
 
     function insertPageBreak() {
-        const cur = el.input.selectionStart;
-        el.input.value = el.input.value.slice(0, cur) + "\n---\n" + el.input.value.slice(cur);
+        const pos = el.input.selectionStart;
+        const val = el.input.value;
+        el.input.value = val.slice(0, pos) + "\n---\n" + val.slice(pos);
         render();
     }
 
     async function downloadImage() {
-        const canvas = await html2canvas(el.canvas, { scale: 2 }); // 2倍清析度
+        // 隱藏數據看板避免被拍進去
+        document.getElementById('stats-board').style.display = 'none';
+        const canvas = await html2canvas(el.container, { scale: 2 });
+        document.getElementById('stats-board').style.display = 'block';
+        
         const link = document.createElement('a');
-        link.download = `poem-${Date.now()}.png`;
-        link.href = canvas.toDataURL();
+        link.download = `poem-card-${Date.now()}.png`;
+        link.href = canvas.toDataURL("image/png");
         link.click();
     }
 
-    [el.input, el.bg, el.font, el.auto, el.size, el.line, el.align, el.offX, el.offY].forEach(item => {
+    // 綁定所有事件
+    [el.input, el.bg, el.font, el.auto, el.size, el.alignX, el.alignY, el.offX, el.offY].forEach(item => {
         item.addEventListener('input', render);
     });
 
+    // 初始化
     render();
 </script>
 </body>
