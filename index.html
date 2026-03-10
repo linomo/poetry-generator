@@ -3,101 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Poetry Card Generator - Pro Edition</title>
+    <title>Poetry Card - Per-Page Control</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+Mono:wght@500&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        :root { --bg-color: #545c2a; --text-color: #ffffff; }
+        :root { --bg-color: #545c2a; }
         body { font-family: -apple-system, sans-serif; display: flex; background: #f0f0f0; margin: 0; height: 100vh; overflow: hidden; }
-        
-        /* 控制面板 */
-        #controls { width: 250px; padding: 20px; background: #fff; box-shadow: 2px 0 10px rgba(0,0,0,0.1); overflow-y: auto; display: flex; flex-direction: column; gap: 15px; z-index: 10; }
-        h2 { margin: 0 0 10px 0; font-size: 1.2rem; border-bottom: 2px solid #333; padding-bottom: 5px; }
-        textarea { width: 100%; height: 100px; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; resize: none; }
-        .control-group { display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 12px; font-weight: bold; color: #666; display: flex; justify-content: space-between; align-items: center; }
-        select, input[type="range"] { width: 100%; }
-        .btn { padding: 10px; cursor: pointer; border: none; border-radius: 4px; background: #333; color: #fff; font-size: 13px; font-weight: bold; }
-        .btn-page { background: #eee; color: #333; margin: 0 4px 4px 0; font-weight: normal; min-width: 35px; }
-        
-        /* 預覽區域 */
-        #preview-area { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #e8e8e8; position: relative; }
+        #controls { width: 280px; padding: 15px; background: #fff; box-shadow: 2px 0 10px rgba(0,0,0,0.1); overflow-y: auto; display: flex; flex-direction: column; gap: 12px; z-index: 10; }
+        h2 { margin: 0; font-size: 1.1rem; border-bottom: 2px solid #333; padding-bottom: 5px; }
+        textarea { width: 100%; height: 100px; padding: 8px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; resize: none; }
+        .control-group { display: flex; flex-direction: column; gap: 4px; }
+        label { font-size: 11px; font-weight: bold; color: #666; display: flex; justify-content: space-between; }
+        .btn { padding: 8px; cursor: pointer; border: none; border-radius: 4px; background: #333; color: #fff; font-size: 12px; font-weight: bold; }
+        .btn-page { background: #eee; color: #333; margin: 0 4px 4px 0; min-width: 32px; border: 1px solid #ddd; }
+        #preview-area { flex-grow: 1; display: flex; align-items: center; justify-content: center; background: #dbdbdb; }
         #canvas-container { 
-            width: 500px; height: 500px; 
-            background: var(--bg-color); 
-            display: flex; 
-            position: relative; 
-            overflow: hidden; 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            /* 核心對齊邏輯 */
-            align-items: center;    /* 預設 X 軸置中 */
-            justify-content: center; /* 預設 Y 軸置中 */
+            width: 500px; height: 500px; background: var(--bg-color); 
+            display: flex; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            align-items: center; justify-content: center; 
         }
         #text-box { 
-            color: var(--text-color); 
-            writing-mode: vertical-rl; 
-            display: flex; 
-            white-space: pre-wrap; 
-            width: auto; height: auto; 
-            max-width: 90%; max-height: 90%;
-            transition: transform 0.1s;
-            line-height: 1.5;
+            color: #fff; writing-mode: vertical-rl; display: flex; white-space: pre-wrap; 
+            max-width: 90%; max-height: 90%; line-height: 1.5; 
         }
-
-        /* 數據看板 */
-        #stats-board { position: absolute; bottom: 15px; right: 15px; background: rgba(0,0,0,0.7); color: #fff; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 10px; pointer-events: none; }
+        #stats-board { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 5px 8px; border-radius: 3px; font-size: 9px; pointer-events: none; }
     </style>
 </head>
 <body>
 
 <div id="controls">
-    <h2>Poetry Config</h2>
-    
+    <h2>Poetry Station</h2>
     <div class="control-group">
         <label>內文 <span>(--- 分頁)</span></label>
-        <textarea id="textInput">鏽色&#10;&#10;我終究還是長大了&#10;無視你的意願</textarea>
-        <button class="btn" onclick="insertPageBreak()" style="background:#666">插入分頁符號</button>
+        <textarea id="textInput">第一頁&#10;---&#10;第二頁字比較多&#10;需要獨立縮放</textarea>
+        <button class="btn" onclick="insertPageBreak()" style="background:#888">插入分頁</button>
     </div>
 
     <div class="control-group">
-        <label>外觀設定</label>
+        <label>全體底色</label>
         <input type="color" id="bgColor" value="#545c2a">
-        <select id="fontSelect">
-            <option value="'Noto Serif TC', serif">文青宋體 (Serif)</option>
-            <option value="'Noto Sans Mono', monospace">科技黑體 (Mono)</option>
-            <option value="'ZCOOL KuaiLe', cursive">可愛圓體 (Happy)</option>
-        </select>
     </div>
 
     <div class="control-group">
         <label>
-            字體大小 
-            <span><input type="checkbox" id="autoScale" checked> 自動縮放</span>
+            當前頁面字級 
+            <span><input type="checkbox" id="autoScale"> 自動</span>
         </label>
-        <input type="range" id="fontSizeSlider" min="12" max="200" value="60">
+        <input type="range" id="fontSizeSlider" min="10" max="250" value="60">
     </div>
 
     <div class="control-group">
-        <label>X 軸對齊 (水平方向)</label>
+        <label>字體風格 (全體)</label>
+        <select id="fontSelect">
+            <option value="'Noto Serif TC', serif">文青宋體</option>
+            <option value="'Noto Sans Mono', monospace">科技黑體</option>
+            <option value="'ZCOOL KuaiLe', cursive">可愛圓體</option>
+        </select>
+    </div>
+
+    <div class="control-group">
+        <label>對齊方式 (當前頁)</label>
         <select id="alignX">
-            <option value="center">置中 (Center)</option>
-            <option value="flex-start">置右 (Right / Start)</option>
-            <option value="flex-end">置左 (Left / End)</option>
+            <option value="center">X 置中</option>
+            <option value="flex-start">X 置右</option>
+            <option value="flex-end">X 置左</option>
+        </select>
+        <select id="alignY" style="margin-top:4px">
+            <option value="center">Y 置中</option>
+            <option value="flex-start">Y 靠上</option>
+            <option value="flex-end">Y 靠下</option>
         </select>
     </div>
 
     <div class="control-group">
-        <label>Y 軸對齊 (垂直方向)</label>
-        <select id="alignY">
-            <option value="center">置中 (Middle)</option>
-            <option value="flex-start">靠上 (Top)</option>
-            <option value="flex-end">靠下 (Bottom)</option>
-        </select>
-    </div>
-
-    <div class="control-group">
-        <label>細部座標微調 (X / Y)</label>
-        <div style="display:flex; gap:10px;">
+        <label>座標微調 (當前頁)</label>
+        <div style="display:flex; gap:5px;">
             <input type="range" id="offsetX" min="-200" max="200" value="0">
             <input type="range" id="offsetY" min="-200" max="200" value="0">
         </div>
@@ -105,16 +85,14 @@
 
     <hr>
     <div id="pagination-controls"></div>
-    <button class="btn" style="background:#2a5c3a; margin-top:10px;" onclick="downloadImage()">下載當前頁面 (PNG)</button>
+    <button class="btn" style="background:#2a5c3a" onclick="downloadImage()">下載本頁 PNG</button>
 </div>
 
 <div id="preview-area">
-    <div id="canvas-container" id="capture">
+    <div id="canvas-container">
         <div id="text-box"></div>
         <div id="stats-board">
-            SIZE: <span id="val-size">0</span>px | 
-            POS: <span id="val-pos">0,0</span><br>
-            PAGE: <span id="val-page">1/1</span>
+            PAGE: <span id="val-page">1/1</span> | SIZE: <span id="val-size">0</span>px
         </div>
     </div>
 </div>
@@ -124,8 +102,8 @@
         input: document.getElementById('textInput'),
         box: document.getElementById('text-box'),
         container: document.getElementById('canvas-container'),
-        font: document.getElementById('fontSelect'),
         bg: document.getElementById('bgColor'),
+        font: document.getElementById('fontSelect'),
         auto: document.getElementById('autoScale'),
         size: document.getElementById('fontSizeSlider'),
         alignX: document.getElementById('alignX'),
@@ -136,99 +114,137 @@
     };
 
     let currentPage = 0;
-    let pageData = [];
+    let pageConfigs = []; // 儲存每一頁的獨立設定
+
+    function updatePageData() {
+        const texts = el.input.value.split(/\n---\n|---/);
+        
+        // 同步配置陣列長度
+        texts.forEach((txt, i) => {
+            if (!pageConfigs[i]) {
+                // 如果是新頁面，繼承前一頁的設定或使用預設值
+                const prev = pageConfigs[i-1] || {};
+                pageConfigs[i] = {
+                    text: txt.trim(),
+                    fontSize: prev.fontSize || 60,
+                    auto: prev.auto !== undefined ? prev.auto : true,
+                    alignX: prev.alignX || 'center',
+                    alignY: prev.alignY || 'center',
+                    offX: prev.offX || 0,
+                    offY: prev.offY || 0
+                };
+            } else {
+                pageConfigs[i].text = txt.trim();
+            }
+        });
+        
+        // 刪除多餘的配置
+        if (pageConfigs.length > texts.length) {
+            pageConfigs = pageConfigs.slice(0, texts.length);
+        }
+        
+        syncUI();
+    }
+
+    // 將當前頁面的數據反應到控制面板上
+    function syncUI() {
+        const conf = pageConfigs[currentPage];
+        if (!conf) return;
+
+        el.auto.checked = conf.auto;
+        el.size.value = conf.fontSize;
+        el.size.disabled = conf.auto;
+        el.alignX.value = conf.alignX;
+        el.alignY.value = conf.alignY;
+        el.offX.value = conf.offX;
+        el.offY.value = conf.offY;
+        
+        render();
+    }
 
     function render() {
-        // 分頁處理
-        pageData = el.input.value.split(/\n---\n|---/);
-        if (currentPage >= pageData.length) currentPage = pageData.length - 1;
-
-        // 樣式套用
+        const conf = pageConfigs[currentPage];
         el.container.style.backgroundColor = el.bg.value;
         el.box.style.fontFamily = el.font.value;
-        
-        // 直排模式下的對齊邏輯修正
-        // align-items 在 vertical-rl 模式下控制水平 (X)
-        el.container.style.alignItems = el.alignX.value; 
-        // justify-content 在 vertical-rl 模式下控制垂直 (Y)
-        el.container.style.justifyContent = el.alignY.value; 
-        
-        // 位移
-        el.box.style.transform = `translate(${el.offX.value}px, ${el.offY.value}px)`;
-        
-        // 內容
-        const content = (pageData[currentPage] || "").trim();
-        el.box.innerText = content;
+        el.container.style.alignItems = conf.alignX;
+        el.container.style.justifyContent = conf.alignY;
+        el.box.style.transform = `translate(${conf.offX}px, ${conf.offY}px)`;
+        el.box.innerText = conf.text;
 
-        // 字體縮放
-        if (el.auto.checked) {
-            el.size.disabled = true;
+        if (conf.auto) {
             autoScale();
         } else {
-            el.size.disabled = false;
-            el.box.style.fontSize = el.size.value + 'px';
-            document.getElementById('val-size').innerText = el.size.value;
+            el.box.style.fontSize = conf.fontSize + 'px';
+            document.getElementById('val-size').innerText = conf.fontSize;
         }
 
-        // 介面更新
         updatePagination();
-        document.getElementById('val-pos').innerText = `${el.offX.value},${el.offY.value}`;
-        document.getElementById('val-page').innerText = `${currentPage + 1} / ${pageData.length}`;
+        document.getElementById('val-page').innerText = `${currentPage + 1}/${pageConfigs.length}`;
     }
 
     function autoScale() {
-        let s = 200;
-        const limitW = el.container.clientWidth * 0.85;
-        const limitH = el.container.clientHeight * 0.85;
+        let s = 220;
+        const limitW = el.container.clientWidth * 0.88;
+        const limitH = el.container.clientHeight * 0.88;
         el.box.style.fontSize = s + 'px';
-        
-        // 循環縮小直到符合範圍
         while ((el.box.offsetHeight > limitH || el.box.offsetWidth > limitW) && s > 12) {
             s -= 1;
             el.box.style.fontSize = s + 'px';
         }
+        pageConfigs[currentPage].fontSize = s; // 更新記憶
         document.getElementById('val-size').innerText = s;
-        el.size.value = s;
+    }
+
+    // 監聽控制項：當使用者撥動滑桿時，只更新「當前頁面」的記憶
+    function handleControlInput(key, value) {
+        if (pageConfigs[currentPage]) {
+            pageConfigs[currentPage][key] = value;
+            render();
+        }
     }
 
     function updatePagination() {
         el.pages.innerHTML = '<label>切換頁面</label>';
-        pageData.forEach((_, i) => {
+        pageConfigs.forEach((_, i) => {
             const b = document.createElement('button');
             b.innerText = i + 1;
             b.className = 'btn btn-page';
             if (i === currentPage) { b.style.background = '#333'; b.style.color = '#fff'; }
-            b.onclick = () => { currentPage = i; render(); };
+            b.onclick = () => { currentPage = i; syncUI(); };
             el.pages.appendChild(b);
         });
     }
 
     function insertPageBreak() {
         const pos = el.input.selectionStart;
-        const val = el.input.value;
-        el.input.value = val.slice(0, pos) + "\n---\n" + val.slice(pos);
-        render();
+        el.input.value = el.input.value.slice(0, pos) + "\n---\n" + el.input.value.slice(pos);
+        updatePageData();
     }
 
     async function downloadImage() {
-        // 隱藏數據看板避免被拍進去
-        document.getElementById('stats-board').style.display = 'none';
+        document.getElementById('stats-board').style.opacity = '0';
         const canvas = await html2canvas(el.container, { scale: 2 });
-        document.getElementById('stats-board').style.display = 'block';
-        
+        document.getElementById('stats-board').style.opacity = '1';
         const link = document.createElement('a');
-        link.download = `poem-card-${Date.now()}.png`;
-        link.href = canvas.toDataURL("image/png");
+        link.download = `poem-p${currentPage+1}.png`;
+        link.href = canvas.toDataURL();
         link.click();
     }
 
-    // 綁定所有事件
-    [el.input, el.bg, el.font, el.auto, el.size, el.alignX, el.alignY, el.offX, el.offY].forEach(item => {
-        item.addEventListener('input', render);
-    });
+    // 事件綁定
+    el.input.addEventListener('input', updatePageData);
+    el.bg.addEventListener('input', render);
+    el.font.addEventListener('change', render);
 
-    // 初始化
-    render();
+    el.auto.addEventListener('change', (e) => handleControlInput('auto', e.target.checked));
+    el.size.addEventListener('input', (e) => handleControlInput('fontSize', parseInt(e.target.value)));
+    el.alignX.addEventListener('change', (e) => handleControlInput('alignX', e.target.value));
+    el.alignY.addEventListener('change', (e) => handleControlInput('alignY', e.target.value));
+    el.offX.addEventListener('input', (e) => handleControlInput('offX', parseInt(e.target.value)));
+    el.offY.addEventListener('input', (e) => handleControlInput('offY', parseInt(e.target.value)));
+
+    // 啟動
+    updatePageData();
 </script>
 </body>
 </html>
