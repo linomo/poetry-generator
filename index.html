@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Poetry Station Pro - Steady Layout</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
     <style>
         :root { --sidebar-w: 280px; --accent: #2a5c3a; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -36,7 +36,7 @@
             will-change: transform;
         }
         
-        /* 文字容器 - 直式排版，允許自動換列 */
+        /* 文字容器 - 直式排版修正版 */
         #text-box { 
             color: #fff; 
             writing-mode: vertical-rl; 
@@ -45,6 +45,10 @@
             max-width: 90%; 
             max-height: 90%; 
             line-height: 1.5;
+            text-orientation: upright; /* 強制所有字符直立 */
+            font-feature-settings: "vpal" 1; /* 使用垂直標點 */
+            letter-spacing: 0; /* 統一字符間距 */
+            word-break: break-all; /* 允許任意位置斷行 */
         }
 
         /* 彈出預覽 */
@@ -269,23 +273,27 @@
         const stats = document.getElementById('stats-board');
         stats.style.display = 'none';
         
-        // 等待渲染完成
-        await new Promise(r => setTimeout(r, 200));
+        // 給足夠時間讓瀏覽器完成排版計算
+        await new Promise(r => setTimeout(r, 500));
         
         try {
-            // 使用 html2canvas，scale=2 提高解析度
-            const canvas = await html2canvas(el.container, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                backgroundColor: el.bg.value,
-                windowWidth: 500,
-                windowHeight: 500
+            // 使用 dom-to-image，按原始尺寸截圖以保持排版
+            const dataUrl = await domtoimage.toPng(el.container, {
+                quality: 1,
+                cacheBust: true,
+                width: 1000,  // 2x 解析度
+                height: 1000,
+                style: {
+                    transform: 'scale(2)',
+                    transformOrigin: 'top left',
+                    width: '500px',
+                    height: '500px'
+                }
             });
             
             const overlay = document.getElementById('image-overlay');
             const finalImg = document.getElementById('final-image');
-            finalImg.src = canvas.toDataURL("image/png");
+            finalImg.src = dataUrl;
             overlay.style.display = 'flex';
             console.log("圖片生成完成");
         } catch (e) {
