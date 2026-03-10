@@ -63,4 +63,225 @@
         <select id="fontSelect" style="padding:8px; border-radius:4px;">
             <option value="'Noto Serif TC', serif">文青宋體</option>
             <option value="'Noto Sans Mono', monospace">科技黑體</option>
-            <option value="'ZCOOL KuaiLe', cursive
+            <option value="'ZCOOL KuaiLe', cursive">可愛圓體</option>
+        </select>
+    </div>
+
+    <div class="control-group">
+        <label>字體大小控制 <span><input type="checkbox" id="autoScale" checked> 自動填滿</span></label>
+        <div class="size-presets">
+            <button class="btn-size" onclick="setFixedSize(30)">30px</button>
+            <button class="btn-size" onclick="setFixedSize(33)">33px</button>
+            <button class="btn-size" onclick="setFixedSize(50)">50px</button>
+        </div>
+        <input type="range" id="fontSizeSlider" min="10" max="250" value="60" style="margin-top:10px;">
+    </div>
+
+    <div class="control-group">
+        <label>對齊設定 (獨立分頁)</label>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+            <select id="alignX"><option value="center">X 居中</option><option value="flex-start">X 置右</option><option value="flex-end">X 置左</option></select>
+            <select id="alignY"><option value="center">Y 居中</option><option value="flex-start">Y 靠上</option><option value="flex-end">Y 靠下</option></select>
+        </div>
+    </div>
+
+    <div class="control-group">
+        <label>細部座標位移 (X / Y)</label>
+        <div style="display:flex; gap:10px;">
+            <input type="range" id="offsetX" min="-250" max="250" value="0">
+            <input type="range" id="offsetY" min="-250" max="250" value="0">
+        </div>
+    </div>
+
+    <hr style="border:0; border-top:1px solid #eee; margin:5px 0;">
+    <div id="pagination-controls"></div>
+    <button class="btn" style="background:var(--accent); margin-top:10px;" onclick="downloadImage()">生成圖片 (長按/右鍵存檔)</button>
+</aside>
+
+<main id="preview-area">
+    <div id="canvas-container">
+        <div id="text-box"></div>
+        <div id="stats-board">
+            SIZE: <span id="val-size">0</span>px | PAGE: <span id="val-page">1/1</span>
+        </div>
+    </div>
+</main>
+
+<div id="image-overlay" onclick="this.style.display='none'">
+    <div class="hint">💡 圖片已生成！請「長按」或「右鍵」儲存至相簿</div>
+    <img id="final-image" src="" alt="長按儲存">
+    <div style="color:#aaa; font-size:12px; margin-top:15px;">點擊空白處返回</div>
+</div>
+
+<script>
+    const el = {
+        input: document.getElementById('textInput'),
+        box: document.getElementById('text-box'),
+        container: document.getElementById('canvas-container'),
+        bg: document.getElementById('bgColor'),
+        font: document.getElementById('fontSelect'),
+        auto: document.getElementById('autoScale'),
+        size: document.getElementById('fontSizeSlider'),
+        alignX: document.getElementById('alignX'),
+        alignY: document.getElementById('alignY'),
+        offX: document.getElementById('offsetX'),
+        offY: document.getElementById('offsetY'),
+        pages: document.getElementById('pagination-controls')
+    };
+
+    let currentPage = 0;
+    let pageConfigs = [];
+    let debounceTimer;
+
+    // 防抖函數：避免輸入太快導致瀏覽器崩潰
+    function debounceRender() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            updatePageData();
+        }, 100); 
+    }
+
+    function updatePageData() {
+        const texts = el.input.value.split(/\n---\n|---/);
+        texts.forEach((txt, i) => {
+            if (!pageConfigs[i]) {
+                const prev = pageConfigs[i-1] || {};
+                pageConfigs[i] = {
+                    text: txt.trim(),
+                    fontSize: prev.fontSize || 60,
+                    auto: prev.auto !== undefined ? prev.auto : true,
+                    alignX: prev.alignX || 'center',
+                    alignY: prev.alignY || 'center',
+                    offX: prev.offX || 0,
+                    offY: prev.offY || 0
+                };
+            } else {
+                pageConfigs[i].text = txt.trim();
+            }
+        });
+        if (pageConfigs.length > texts.length) pageConfigs = pageConfigs.slice(0, texts.length);
+        syncUI();
+    }
+
+    function syncUI() {
+        const conf = pageConfigs[currentPage];
+        if (!conf) return;
+        el.auto.checked = conf.auto;
+        el.size.value = conf.fontSize;
+        el.size.disabled = conf.auto;
+        el.alignX.value = conf.alignX;
+        el.alignY.value = conf.alignY;
+        el.offX.value = conf.offX;
+        el.offY.value = conf.offY;
+        render();
+    }
+
+    function setFixedSize(px) {
+        if (!pageConfigs[currentPage]) return;
+        pageConfigs[currentPage].auto = false;
+        pageConfigs[currentPage].fontSize = px;
+        syncUI();
+    }
+
+    function render() {
+        const conf = pageConfigs[currentPage];
+        if (!conf) return;
+
+        el.container.style.backgroundColor = el.bg.value;
+        el.box.style.fontFamily = el.font.value;
+        el.container.style.alignItems = conf.alignX;
+        el.container.style.justifyContent = conf.alignY;
+        el.box.style.transform = `translate(${conf.offX}px, ${conf.offY}px)`;
+        el.box.innerText = conf.text;
+
+        if (conf.auto) {
+            autoScale();
+        } else {
+            el.box.style.fontSize = conf.fontSize + 'px';
+            document.getElementById('val-size').innerText = conf.fontSize;
+        }
+
+        updatePagination();
+        document.getElementById('val-page').innerText = `${currentPage + 1}/${pageConfigs.length}`;
+    }
+
+    // 優化後的縮放邏輯
+    function autoScale() {
+        const limitW = el.container.clientWidth * 0.88;
+        const limitH = el.container.clientHeight * 0.88;
+        let s = 250; 
+        
+        el.box.style.fontSize = s + 'px';
+        
+        // 快速粗略調整 (每次減 5px)
+        while ((el.box.offsetHeight > limitH || el.box.offsetWidth > limitW) && s > 20) {
+            s -= 5;
+            el.box.style.fontSize = s + 'px';
+        }
+        // 精確微調 (每次減 1px)
+        while ((el.box.offsetHeight > limitH || el.box.offsetWidth > limitW) && s > 10) {
+            s -= 1;
+            el.box.style.fontSize = s + 'px';
+        }
+
+        pageConfigs[currentPage].fontSize = s;
+        document.getElementById('val-size').innerText = s;
+        el.size.value = s;
+    }
+
+    function handleControlInput(key, value) {
+        if (pageConfigs[currentPage]) {
+            pageConfigs[currentPage][key] = value;
+            render();
+        }
+    }
+
+    function updatePagination() {
+        el.pages.innerHTML = '<label>切換頁面</label>';
+        pageConfigs.forEach((_, i) => {
+            const b = document.createElement('button');
+            b.innerText = i + 1;
+            b.className = 'btn btn-page';
+            if (i === currentPage) { b.style.background = '#333'; b.style.color = '#fff'; }
+            b.onclick = () => { currentPage = i; syncUI(); };
+            el.pages.appendChild(b);
+        });
+    }
+
+    function insertPageBreak() {
+        const pos = el.input.selectionStart;
+        const val = el.input.value;
+        el.input.value = val.slice(0, pos) + "\n---\n" + val.slice(pos);
+        updatePageData();
+    }
+
+    async function downloadImage() {
+        document.getElementById('stats-board').style.opacity = '0';
+        const canvas = await html2canvas(el.container, { 
+            scale: 2, /* 電腦版改為 2 倍即可，避免生成超大檔案造成卡頓 */
+            useCORS: true,
+            logging: false 
+        });
+        document.getElementById('stats-board').style.opacity = '1';
+        
+        const overlay = document.getElementById('image-overlay');
+        const finalImg = document.getElementById('final-image');
+        finalImg.src = canvas.toDataURL("image/png");
+        overlay.style.display = 'flex';
+    }
+
+    // 事件綁定
+    el.input.addEventListener('input', debounceRender);
+    el.bg.addEventListener('input', render);
+    el.font.addEventListener('change', render);
+    el.auto.addEventListener('change', (e) => handleControlInput('auto', e.target.checked));
+    el.size.addEventListener('input', (e) => handleControlInput('fontSize', parseInt(e.target.value)));
+    el.alignX.addEventListener('change', (e) => handleControlInput('alignX', e.target.value));
+    el.alignY.addEventListener('change', (e) => handleControlInput('alignY', e.target.value));
+    el.offX.addEventListener('input', (e) => handleControlInput('offX', parseInt(e.target.value)));
+    el.offY.addEventListener('input', (e) => handleControlInput('offY', parseInt(e.target.value)));
+
+    updatePageData();
+</script>
+</body>
+</html>
