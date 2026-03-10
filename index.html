@@ -36,19 +36,15 @@
             will-change: transform;
         }
         
-        /* 文字容器 - 使用 flexbox 排列多列 */
+        /* 文字容器 - 直式排版，允許自動換列 */
         #text-box { 
             color: #fff; 
-            display: flex; 
-            flex-direction: row-reverse; /* 從右到左排列 */
-            max-width: 90%; max-height: 90%; 
-        }
-        
-        /* 每一列 */
-        .text-column {
             writing-mode: vertical-rl; 
             -webkit-writing-mode: vertical-rl;
-            white-space: nowrap;
+            white-space: pre-wrap; /* 允許自動換列 */
+            max-width: 90%; 
+            max-height: 90%; 
+            line-height: 1.5;
         }
 
         /* 彈出預覽 */
@@ -206,28 +202,16 @@
         if (!conf) return;
 
         el.container.style.backgroundColor = el.bg.value;
+        el.box.style.fontFamily = el.font.value;
+        el.box.style.lineHeight = conf.lineHeight;
         el.container.style.alignItems = conf.alignX; 
         el.container.style.justifyContent = conf.alignY; 
         el.box.style.transform = `translate(${conf.offX}px, ${conf.offY}px)`; 
-        
-        // 將文字拆分成多列（保留空行）
-        const lines = conf.text.split('\n');
-        el.box.innerHTML = '';
-        const marginValue = (conf.lineHeight - 1) * 10; // 將 lineHeight 轉換為列間距
-        lines.forEach(line => {
-            const col = document.createElement('div');
-            col.className = 'text-column';
-            col.style.fontFamily = el.font.value;
-            col.style.margin = `0 ${marginValue}px`;
-            col.textContent = line || '\u00A0'; // 空行用不斷行空格
-            el.box.appendChild(col);
-        });
+        el.box.innerText = conf.text;
 
         if (conf.auto) { autoScale(); } 
         else {
-            document.querySelectorAll('.text-column').forEach(col => {
-                col.style.fontSize = conf.fontSize + 'px';
-            });
+            el.box.style.fontSize = conf.fontSize + 'px';
             document.getElementById('val-size').innerText = conf.fontSize;
         }
 
@@ -239,16 +223,12 @@
         const limitW = el.container.clientWidth * 0.88;
         const limitH = el.container.clientHeight * 0.88;
         let s = 250;
-        const columns = document.querySelectorAll('.text-column');
-        columns.forEach(col => col.style.fontSize = s + 'px');
-        
+        el.box.style.fontSize = s + 'px';
         while ((el.box.offsetHeight > limitH || el.box.offsetWidth > limitW) && s > 20) {
-            s -= 5; 
-            columns.forEach(col => col.style.fontSize = s + 'px');
+            s -= 5; el.box.style.fontSize = s + 'px';
         }
         while ((el.box.offsetHeight > limitH || el.box.offsetWidth > limitW) && s > 10) {
-            s -= 1; 
-            columns.forEach(col => col.style.fontSize = s + 'px');
+            s -= 1; el.box.style.fontSize = s + 'px';
         }
         pageConfigs[currentPage].fontSize = s;
         document.getElementById('val-size').innerText = s;
