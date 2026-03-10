@@ -222,13 +222,35 @@
     }
 
     async function downloadImage() {
+        // 隱藏數據看板避免拍進去
         document.getElementById('stats-board').style.opacity = '0';
         const canvas = await html2canvas(el.container, { scale: 2 });
         document.getElementById('stats-board').style.opacity = '1';
-        const link = document.createElement('a');
-        link.download = `poem-p${currentPage+1}.png`;
-        link.href = canvas.toDataURL();
-        link.click();
+
+        // 將 Canvas 轉換為 Blob (檔案格式)
+        canvas.toBlob(async (blob) => {
+            const fileName = `poem-p${currentPage + 1}.png`;
+            const file = new File([blob], fileName, { type: 'image/png' });
+
+            // 檢查是否支援分享功能 (iPad Safari 基本上都支援)
+            if (navigator.share && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: '我的詩作卡片',
+                        text: '分享自 Poetry Station'
+                    });
+                } catch (err) {
+                    console.log("分享取消或失敗", err);
+                }
+            } else {
+                // 如果不支援分享 (例如舊版瀏覽器)，則使用傳統下載
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            }
+        }, 'image/png');
     }
 
     // 事件綁定
